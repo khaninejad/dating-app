@@ -1,0 +1,104 @@
+import { ValidatedEventAPIGatewayProxyEvent } from '@libs/api-gateway';
+import { middyfy } from '@libs/lambda';
+import { DynamoDB } from 'aws-sdk';
+import { v4 as uuidv4 } from 'uuid';
+import schema from './schema';
+
+const dynamoDb = new DynamoDB.DocumentClient();
+
+const swipeHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event) => {
+  try {
+
+    const getUserParams = {
+      TableName: process.env.DYNAMODB_TABLE || 'DYNAMODB_TABLE',
+      Key: {
+        id: event.body.user_id,
+      },
+    };
+
+    const getProfileParams = {
+      TableName: process.env.DYNAMODB_TABLE || 'DYNAMODB_TABLE',
+      Key: {
+        id: event.body.profile_id,
+      },
+    };
+
+    const [userResult, profileResult] = await Promise.all([
+      dynamoDb.get(getUserParams).promise(),
+      dynamoDb.get(getProfileParams).promise(),
+    ]);
+
+    if (!userResult.Item || !profileResult.Item) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({
+          message: 'User or profile not found',
+        }),
+      };
+    }
+
+    const swipeId = uuidv4();
+
+    const swipeParams = {
+      TableName: process.env.DYNAMODB_TABLE || 'SWIPE_TABLE4',
+      Item: {
+        id: swipeId,
+        user_id: event.body.user_id,
+        profile_id: event.body.profile_id,
+        preference: event.body.preference,
+        timestamp: new Date().toISOString(),
+      },
+    };
+
+    await dynamoDb.put(swipeParams).promise();
+
+
+    let isMatch = false;
+
+    if (event.body.preference === 'YES') {
+      const getSwipesParams = {
+        TableName: process.env.DYNAMODB_TABLE || 'SWIPE_TABLE4',
+        IndexName: 'ProfileIndex',
+        KeyConditionExpression: 'user_id = :user_id',
+        ExpressionAttributeValues: {
+          ':user_id': event.body.profile_id,
+        },
+      };
+
+      const swipesResult = await dynamoDb.query(getSwipesParams).promise();
+
+      const profileSwipes = swipesResult.Items?.filter(
+        (swipe) => swipe.preference === 'YES'
+      );
+
+      console.log(profileSwipes);
+
+      if (profileSwipes) {
+        const hasMatch = profileSwipes.some((swipe) => swipe.user_id === event.body.user_id);
+        if (hasMatch) {
+          isMatch = true;
+        }
+      }
+    }
+
+    const response = {
+      statusCode: 200,
+      body: JSON.stringify({
+        swipeId,
+        isMatch,
+      }),
+    };
+
+    return response;
+  } catch (error) {
+    console.error(error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ message: `An error occurred: ${error.message}` }),
+    };
+  }
+};
+
+
+
+export const main = middyfy(swipeHandler);
