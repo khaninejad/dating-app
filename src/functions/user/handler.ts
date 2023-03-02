@@ -3,6 +3,7 @@ import { middyfy } from '@libs/lambda';
 import { DynamoDB } from 'aws-sdk';
 import { v4 as uuidv4 } from 'uuid';
 import schema from './schema';
+import configuration from '../../config/config';
 
 const dynamoDb = new DynamoDB.DocumentClient();
 
@@ -19,7 +20,7 @@ const createUserHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = asy
           };
 
           const params = {
-            TableName: process.env.DYNAMODB_TABLE || 'DYNAMODB_TABLE',
+            TableName: configuration().user_table,
             Item: user,
           };
       

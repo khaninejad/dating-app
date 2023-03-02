@@ -3,6 +3,7 @@ import { middyfy } from '@libs/lambda';
 import { DynamoDB } from 'aws-sdk';
 import { v4 as uuidv4 } from 'uuid';
 import schema from './schema';
+import configuration from '../../config/config';
 
 const dynamoDb = new DynamoDB.DocumentClient();
 
@@ -10,14 +11,14 @@ const swipeHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (e
   try {
 
     const getUserParams = {
-      TableName: process.env.DYNAMODB_TABLE || 'DYNAMODB_TABLE',
+      TableName: configuration().user_table,
       Key: {
         id: event.body.user_id,
       },
     };
 
     const getProfileParams = {
-      TableName: process.env.DYNAMODB_TABLE || 'DYNAMODB_TABLE',
+      TableName: configuration().user_table,
       Key: {
         id: event.body.profile_id,
       },
@@ -40,7 +41,7 @@ const swipeHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (e
     const swipeId = uuidv4();
 
     const swipeParams = {
-      TableName: process.env.DYNAMODB_TABLE || 'SWIPE_TABLE4',
+      TableName: configuration().swipe_table,
       Item: {
         id: swipeId,
         user_id: event.body.user_id,
@@ -57,7 +58,7 @@ const swipeHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (e
 
     if (event.body.preference === 'YES') {
       const getSwipesParams = {
-        TableName: process.env.DYNAMODB_TABLE || 'SWIPE_TABLE4',
+        TableName: process.env.DYNAMODB_TABLE || 'SWIPE_TABLE6',
         IndexName: 'ProfileIndex',
         KeyConditionExpression: 'user_id = :user_id',
         ExpressionAttributeValues: {
@@ -74,7 +75,7 @@ const swipeHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (e
       console.log(profileSwipes);
 
       if (profileSwipes) {
-        const hasMatch = profileSwipes.some((swipe) => swipe.user_id === event.body.user_id);
+        const hasMatch = profileSwipes.some((swipe) => swipe.user_id === event.body.profile_id);
         if (hasMatch) {
           isMatch = true;
         }

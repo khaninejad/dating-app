@@ -2,6 +2,7 @@ import { ValidatedEventAPIGatewayProxyEvent } from '@libs/api-gateway';
 import { middyfy } from '@libs/lambda';
 import { DynamoDB } from 'aws-sdk';
 import schema from './schema';
+import configuration from '../../config/config';
 
 const dynamoDb = new DynamoDB.DocumentClient();
 
@@ -11,7 +12,7 @@ const getProfileHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = asy
     const userId = event.queryStringParameters.user_id;
 
     const result = await dynamoDb.scan({
-      TableName: process.env.DYNAMODB_TABLE || 'DYNAMODB_TABLE',
+      TableName: configuration().user_table,
     }).promise();
 
     const profiles = result.Items.map((item) => ({
