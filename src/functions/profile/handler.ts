@@ -7,11 +7,13 @@ import schema from './schema';
 const getProfileHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event) => {
   try {
 
-    const user = await userService.getProfilesById(event.queryStringParameters.user_id);
+    const user = await userService.getProfileById(event.queryStringParameters.user_id);
+    // 
     const filter: IFilter = { prefer: user.Item.prefer };
-    const result = await userService.getProfiles(filter);
+    const result = await userService.getProfiles(event.queryStringParameters.user_id, filter);
 
-    const profiles = result.Items.map((item) => ({
+
+    const profiles = result.map((item) => ({
       id: item.id,
       name: item.name,
       gender: item.gender,

@@ -60,7 +60,6 @@ const swipeHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (e
         (swipe) => swipe.preference === 'YES'
       );
 
-      console.log(profileSwipes);
 
       if (profileSwipes) {
         const hasMatch = profileSwipes.some((swipe) => swipe.user_id === event.body.profile_id);
