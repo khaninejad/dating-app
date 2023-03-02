@@ -4,6 +4,7 @@ import { DynamoDB } from 'aws-sdk';
 import { v4 as uuidv4 } from 'uuid';
 import schema from './schema';
 import configuration from '../../config/config';
+import {userService, swipeService} from "../../services/index";
 
 const dynamoDb = new DynamoDB.DocumentClient();
 
@@ -38,20 +39,7 @@ const swipeHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (e
       };
     }
 
-    const swipeId = uuidv4();
-
-    const swipeParams = {
-      TableName: configuration().swipe_table,
-      Item: {
-        id: swipeId,
-        user_id: event.body.user_id,
-        profile_id: event.body.profile_id,
-        preference: event.body.preference,
-        timestamp: new Date().toISOString(),
-      },
-    };
-
-    await dynamoDb.put(swipeParams).promise();
+    swipeService.createSwipe(event.body);
 
 
     let isMatch = false;
@@ -85,7 +73,6 @@ const swipeHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (e
     const response = {
       statusCode: 200,
       body: JSON.stringify({
-        swipeId,
         isMatch,
       }),
     };

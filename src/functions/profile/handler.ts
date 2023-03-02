@@ -1,19 +1,13 @@
 import { ValidatedEventAPIGatewayProxyEvent } from '@libs/api-gateway';
 import { middyfy } from '@libs/lambda';
-import { DynamoDB } from 'aws-sdk';
+import {userService} from "../../services/index";
 import schema from './schema';
-import configuration from '../../config/config';
-
-const dynamoDb = new DynamoDB.DocumentClient();
 
 const getProfileHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event) => {
   try {
 
-    const userId = event.queryStringParameters.user_id;
 
-    const result = await dynamoDb.scan({
-      TableName: configuration().user_table,
-    }).promise();
+    const result = await userService.getProfiles();
 
     const profiles = result.Items.map((item) => ({
       id: item.id,
