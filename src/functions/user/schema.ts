@@ -1,6 +1,7 @@
 export default {
   type: "object",
   properties: {
+    random: { type: 'boolean' },
     name: { type: 'string' },
     email: { type: 'string' },
     password: { type: 'string' },
