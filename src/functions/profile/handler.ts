@@ -1,13 +1,15 @@
 import { ValidatedEventAPIGatewayProxyEvent } from '@libs/api-gateway';
 import { middyfy } from '@libs/lambda';
+import { IFilter } from 'src/interfaces/IFilter';
 import {userService} from "../../services/index";
 import schema from './schema';
 
 const getProfileHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event) => {
   try {
 
-
-    const result = await userService.getProfiles();
+    const user = await userService.getProfilesById(event.queryStringParameters.user_id);
+    const filter: IFilter = { prefer: user.Item.prefer };
+    const result = await userService.getProfiles(filter);
 
     const profiles = result.Items.map((item) => ({
       id: item.id,

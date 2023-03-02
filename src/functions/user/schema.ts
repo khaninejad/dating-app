@@ -6,7 +6,8 @@ export default {
     email: { type: 'string' },
     password: { type: 'string' },
     gender: { type: 'string' },
-    birth_date: { type: 'string' }
+    birth_date: { type: 'string' },
+    prefer: { type: 'string' }
   },
-  required: ['name', 'email', 'password', 'gender', 'birth_date'],
+  required: ['name', 'email', 'password', 'gender', 'birth_date', 'prefer'],
 } as const;

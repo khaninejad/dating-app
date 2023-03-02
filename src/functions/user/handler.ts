@@ -5,12 +5,13 @@ import { v4 as uuidv4 } from 'uuid';
 import schema from './schema';
 import { faker } from '@faker-js/faker';
 import {Md5} from 'ts-md5';
+import { IUser } from 'src/interfaces/IUser';
 
 
 
 const createUserHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event) => {
   try {
-    let user = {};
+    let user : IUser = {};
     if(event.body.random){
       user = {
         id: uuidv4(),
@@ -19,6 +20,7 @@ const createUserHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = asy
         name: faker.name.fullName(),
         gender: faker.name.sexType(),
         birth_date: faker.date.birthdate(),
+        prefer: faker.name.sexType(),
       };
     } else{
       user = {
@@ -27,7 +29,8 @@ const createUserHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = asy
         password: Md5.hashStr(event.body.password),
         name: event.body.name,
         gender: event.body.gender,
-        birth_date: event.body.birth_date,
+        birth_date: new Date(event.body.birth_date),
+        prefer: event.body.prefer,
       };
     }
     
