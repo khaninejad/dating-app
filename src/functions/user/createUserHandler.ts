@@ -21,7 +21,7 @@ const createUserHandler: ValidatedEventAPIGatewayProxyEvent<typeof createUserSch
         name: faker.name.fullName(),
         gender: faker.name.sexType(),
         birth_date: faker.date.birthdate().toISOString(),
-        prefer: faker.name.sexType(),
+        location: {longitude: parseFloat(faker.address.longitude()), latitude: parseFloat(faker.address.latitude()) }
       };
     } else{
       user = {
@@ -31,7 +31,7 @@ const createUserHandler: ValidatedEventAPIGatewayProxyEvent<typeof createUserSch
         name: event.body.name,
         gender: event.body.gender,
         birth_date: new Date(event.body.birth_date).toISOString(),
-        prefer: event.body.prefer,
+        location: {longitude: event.body.longitude, latitude: event.body.latitude}
       };
     }
     

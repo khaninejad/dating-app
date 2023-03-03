@@ -5,6 +5,6 @@ export interface IUser{
     password: string;
     gender: 'female' | 'male' | 'other' | string;
     birth_date: string;
-    prefer: 'female' | 'male' | 'other' | string;
+    location: { longitude: number; latitude: number }
 
 }

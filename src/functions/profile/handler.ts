@@ -16,7 +16,7 @@ const getProfileHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = asy
       age_from: event.queryStringParameters.age_from,
       age_to: event.queryStringParameters.age_to
     };
-    const result = await userService.getProfiles(event.queryStringParameters.user_id, filter);
+    const result = await userService.getProfiles(event.queryStringParameters.user_id, filter, { latitude: user.Item.location.latitude, longitude:  user.Item.location.longitude});
 
 
     const profiles = result.map((item) => ({
