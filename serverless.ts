@@ -1,6 +1,6 @@
 import type { AWS } from '@serverless/typescript';
 
-import { createUserHandler } from '@functions/user';
+import { createUserHandler, loginUserHandler } from '@functions/user';
 import { getProfileHandler } from '@functions/profile';
 import { swipeHandler } from '@functions/swipe';
 
@@ -28,7 +28,7 @@ const serverlessConfiguration: AWS = {
     },
   },
   // import the function via paths
-  functions: { createUserHandler, getProfileHandler, swipeHandler },
+  functions: { createUserHandler, getProfileHandler, swipeHandler, loginUserHandler },
   package: { individually: true },
   custom: {
     esbuild: {

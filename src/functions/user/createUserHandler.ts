@@ -2,16 +2,16 @@ import { ValidatedEventAPIGatewayProxyEvent } from '@libs/api-gateway';
 import { middyfy } from '@libs/lambda';
 import {userService} from "../../services/index";
 import { v4 as uuidv4 } from 'uuid';
-import schema from './schema';
+import { createUserSchema } from './schema';
 import { faker } from '@faker-js/faker';
 import {Md5} from 'ts-md5';
 import { IUser } from 'src/interfaces/IUser';
 
 
 
-const createUserHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event) => {
+const createUserHandler: ValidatedEventAPIGatewayProxyEvent<typeof createUserSchema> = async (event) => {
   try {
-    let user : IUser = {};
+    let user = {} as IUser;
     if(event.body.random){
       user = {
         id: uuidv4(),
