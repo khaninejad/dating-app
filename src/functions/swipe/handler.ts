@@ -1,15 +1,17 @@
 import { ValidatedEventAPIGatewayProxyEvent } from '@libs/api-gateway';
 import { middyfy } from '@libs/lambda';
 import { DynamoDB } from 'aws-sdk';
-import { v4 as uuidv4 } from 'uuid';
 import schema from './schema';
 import configuration from '../../config/config';
-import {userService, swipeService} from "../../services/index";
+import {swipeService} from "../../services/index";
+import { AuthHandler } from '@functions/user/AuthHandler';
 
 const dynamoDb = new DynamoDB.DocumentClient();
 
 const swipeHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event) => {
   try {
+
+    await AuthHandler.verifyToken(event.headers['token']);
 
     const getUserParams = {
       TableName: configuration().user_table,

@@ -5,6 +5,7 @@ import { IUser } from 'src/interfaces/IUser';
 // AWSConfig.logger = console;
 
 export default class UserService {
+  
 
 
 
@@ -96,12 +97,12 @@ export default class UserService {
                 TableName: configuration().user_table,
                 Key: { id: user_id },
                 UpdateExpression:
-                    "set #token = :token",
+                    "set #authToken = :authToken",
                 ExpressionAttributeNames: {
-                    "#token": "token",
+                    "#authToken": "authToken",
                 },
                 ExpressionAttributeValues: {
-                    ":token": this.generateRandomString(30),
+                    ":authToken": this.generateRandomString(30),
                 },
                 ReturnValues: "ALL_NEW",
             })
@@ -109,7 +110,7 @@ export default class UserService {
 
         return updated.Attributes as IUser;
   }
-  generateRandomString(length: number): string {
+  private generateRandomString(length: number): string {
     const possibleChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let randomString = '';
     for (let i = 0; i < length; i++) {
@@ -117,4 +118,22 @@ export default class UserService {
     }
     return randomString;
   }
+
+  async verifyUserToken(authToken: string) {
+    const params: DynamoDB.DocumentClient.ScanInput = {
+      TableName: configuration().user_table,
+      FilterExpression: 'authToken = :authToken AND attribute_not_exists(swipe_timestamp)',
+      ExpressionAttributeValues: {
+        ':authToken': authToken
+      },
+      ProjectionExpression: 'id',
+    };
+
+    const result = await this.client.scan(params).promise();
+    if (result.Count) {
+      return result.Items[0];
+    }
+
+    throw new Error('invalid email or password');
+}
 }

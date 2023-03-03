@@ -1,3 +1,4 @@
+import { AuthHandler } from '@functions/user/AuthHandler';
 import { ValidatedEventAPIGatewayProxyEvent } from '@libs/api-gateway';
 import { middyfy } from '@libs/lambda';
 import { IFilter } from 'src/interfaces/IFilter';
@@ -6,6 +7,7 @@ import schema from './schema';
 
 const getProfileHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event) => {
   try {
+    await AuthHandler.verifyToken(event.headers['token']);
 
     const user = await userService.getProfileById(event.queryStringParameters.user_id);
     // 
