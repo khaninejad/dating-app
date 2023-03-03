@@ -1,3 +1,4 @@
+import * as z from 'zod';
 export const createUserSchema = {
   type: "object",
   properties: {
@@ -12,11 +13,7 @@ export const createUserSchema = {
   required: ['name', 'email', 'password', 'gender', 'birth_date', 'prefer'],
 } as const;
 
-export const loginUserSchema = {
-  type: "object",
-  properties: {
-    email: { type: 'string' },
-    password: { type: 'string' },
-  },
-  required: [ 'email', 'password'],
-} as const;
+export const UserLoginRequest = z.object({
+  email: z.string(),
+  password: z.string()
+});

@@ -1,12 +1,25 @@
-import { ValidatedEventAPIGatewayProxyEvent } from '@libs/api-gateway';
-import { middyfy } from '@libs/lambda';
-import {userService} from "../../services/index";
-import { loginUserSchema } from './schema';
-import {Md5} from 'ts-md5';
 
-const loginUserHandler: ValidatedEventAPIGatewayProxyEvent<typeof loginUserSchema> = async (event) => {
+import { userService } from "../../services/index";
+import { Md5 } from 'ts-md5';
+import { APIGatewayEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { UserLoginRequest } from "./schema";
+import * as z from 'zod';
+
+export type CommandRequest = z.infer<typeof UserLoginRequest>;
+const loginUserHandler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
+
   try {
-    const user = await userService.loginUser(event.body.email, Md5.hashStr(event.body.password));
+
+    const params = JSON.parse(event.body);
+    const validated = UserLoginRequest.safeParse(params); //command is of type CommandRequest
+    if (validated.success === false) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ message: validated.error }),
+      };
+    }
+
+    const user = await userService.loginUser(params.email, Md5.hashStr(params.password));
     const token = await userService.setToken(user.id);
     return {
       statusCode: 200,
@@ -21,4 +34,4 @@ const loginUserHandler: ValidatedEventAPIGatewayProxyEvent<typeof loginUserSchem
   }
 };
 
-export const main = middyfy(loginUserHandler);
+export const main = loginUserHandler;

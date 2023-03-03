@@ -2,6 +2,7 @@ import configuration from '../config/config';
 import { config as AWSConfig, DynamoDB } from 'aws-sdk';
 import { IFilter } from 'src/interfaces/IFilter';
 import { IUser } from 'src/interfaces/IUser';
+import { IUserDto } from '@functions/user/userDto';
 // AWSConfig.logger = console;
 
 export default class UserService {
@@ -136,7 +137,7 @@ export default class UserService {
     return res;
   }
 
-  async loginUser(email: string, password: string) {
+  async loginUser(email: string, password: string): Promise<IUserDto> {
     const params: DynamoDB.DocumentClient.ScanInput = {
       TableName: configuration().user_table,
       FilterExpression: 'email = :email AND password = :password AND attribute_not_exists(swipe_timestamp)',
@@ -149,14 +150,14 @@ export default class UserService {
 
     const result = await this.client.scan(params).promise();
     if (result.Count) {
-      return result.Items[0];
+      return result.Items[0] as IUserDto;
     }
 
     throw new Error('invalid email or password');
 
   }
 
-  async setToken(user_id: string) {
+  async setToken(user_id: string): Promise<IUser> {
     const updated = await this.client
       .update({
         TableName: configuration().user_table,
