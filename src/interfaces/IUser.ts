@@ -4,7 +4,7 @@ export interface IUser{
     name: string;
     password: string;
     gender: 'female' | 'male' | 'other' | string;
-    birth_date: Date;
+    birth_date: string;
     prefer: 'female' | 'male' | 'other' | string;
 
 }

@@ -11,7 +11,11 @@ const getProfileHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = asy
 
     const user = await userService.getProfileById(event.queryStringParameters.user_id);
     // 
-    const filter: IFilter = { prefer: user.Item.prefer };
+    const filter: IFilter = {
+      prefer: event.queryStringParameters.prefer,
+      age_from: event.queryStringParameters.age_from,
+      age_to: event.queryStringParameters.age_to
+    };
     const result = await userService.getProfiles(event.queryStringParameters.user_id, filter);
 
 

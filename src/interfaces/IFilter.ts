@@ -1,3 +1,5 @@
 export interface IFilter{
-    prefer: 'male' | 'female' | 'both';
+    prefer: string;
+    age_from: string;
+    age_to: string;
 };

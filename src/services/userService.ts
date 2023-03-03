@@ -25,15 +25,31 @@ export default class UserService {
   async getProfiles(user_id: string, filter?: IFilter) {
     const profileIdsToExclude = await this.getUserSwipedProfiles(user_id);
 
+    console.log(`filter = ${JSON.stringify(filter)}`);
+
     const params: DynamoDB.DocumentClient.ScanInput = {
       TableName: configuration().user_table,
     };
-
-    if (filter && filter.prefer) {
-      params.FilterExpression = 'gender = :gender';
-      params.ExpressionAttributeValues = {
-        ':gender': filter.prefer,
-      };
+  
+    const expressionAttributeValues = {};
+    let filterExpression = '';
+  
+    if (filter) {
+      if (filter.prefer) {
+        filterExpression = 'gender = :gender';
+        expressionAttributeValues[':gender'] = filter.prefer;
+      }
+  
+      if (filter.age_from && filter.age_to) {
+        filterExpression += `${filterExpression ? ' AND ' : ''}birth_date BETWEEN :age_from AND :age_to`;
+        expressionAttributeValues[':age_from'] = filter.age_from;
+        expressionAttributeValues[':age_to'] = filter.age_to;
+      }
+    }
+  
+    if (filterExpression) {
+      params.FilterExpression = filterExpression;
+      params.ExpressionAttributeValues = expressionAttributeValues;
     }
 
     const result = await this.client.scan(params).promise();
@@ -42,7 +58,6 @@ export default class UserService {
       // Exclude profiles already swiped by user, this can be done by query NOT IN(ids) as well
       return !profileIdsToExclude.includes(item.id);
     });
-
 
     return filteredResult;
   }

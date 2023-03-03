@@ -13,13 +13,14 @@ const createUserHandler: ValidatedEventAPIGatewayProxyEvent<typeof createUserSch
   try {
     let user = {} as IUser;
     if(event.body.random){
+      console.log(faker.internet.password());
       user = {
         id: uuidv4(),
         email: faker.internet.email(),
         password: Md5.hashStr(faker.internet.password()),
         name: faker.name.fullName(),
         gender: faker.name.sexType(),
-        birth_date: faker.date.birthdate(),
+        birth_date: faker.date.birthdate().toISOString(),
         prefer: faker.name.sexType(),
       };
     } else{
@@ -29,7 +30,7 @@ const createUserHandler: ValidatedEventAPIGatewayProxyEvent<typeof createUserSch
         password: Md5.hashStr(event.body.password),
         name: event.body.name,
         gender: event.body.gender,
-        birth_date: new Date(event.body.birth_date),
+        birth_date: new Date(event.body.birth_date).toISOString(),
         prefer: event.body.prefer,
       };
     }
