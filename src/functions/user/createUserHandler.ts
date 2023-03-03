@@ -13,7 +13,6 @@ const createUserHandler: ValidatedEventAPIGatewayProxyEvent<typeof createUserSch
   try {
     let user = {} as IUser;
     if(event.body.random){
-      console.log(faker.internet.password());
       user = {
         id: uuidv4(),
         email: faker.internet.email(),

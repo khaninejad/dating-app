@@ -3,7 +3,7 @@ import { middyfy } from '@libs/lambda';
 import { DynamoDB } from 'aws-sdk';
 import schema from './schema';
 import configuration from '../../config/config';
-import {swipeService} from "../../services/index";
+import {swipeService, userService} from "../../services/index";
 import { AuthHandler } from '@functions/user/AuthHandler';
 
 const dynamoDb = new DynamoDB.DocumentClient();
@@ -70,6 +70,10 @@ const swipeHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (e
         }
       }
     }
+    const user_attractiveness = await calculateAttractiveness(event.body.user_id);
+    userService.setAttractiveness(event.body.user_id, user_attractiveness);
+    const profile_attractiveness = await calculateAttractiveness(event.body.profile_id);
+    userService.setAttractiveness(event.body.profile_id, profile_attractiveness);
 
     const response = {
       statusCode: 200,
@@ -80,14 +84,24 @@ const swipeHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (e
 
     return response;
   } catch (error) {
-    console.error(error);
     return {
       statusCode: 500,
       body: JSON.stringify({ message: `An error occurred: ${error.message}` }),
     };
   }
+
+  
 };
 
-
+async function calculateAttractiveness(user_id: string): Promise<number> {
+  const recent_activity = await (await userService.getProfileById(user_id)).Item.recent_activity;
+  const swipe_stats = await userService.getMatchCounts(user_id);
+  let recencyScore =  (Date.now() - new Date(recent_activity).getTime()) / (1000 * 60 * 60 * 24 * 30); // Score based on how recently the user swiped.
+  recencyScore = isNaN(recencyScore)?0:recencyScore
+  const positiveSwipeScore = swipe_stats.positive_match * 2; // Each positive swipe is worth 2 points.
+  const totalSwipeScore = swipe_stats.total_swipe; // Each swipe is worth 1 point.
+  const attractivenessScore = recencyScore +  positiveSwipeScore + totalSwipeScore;
+  return attractivenessScore;
+}
 
 export const main = middyfy(swipeHandler);

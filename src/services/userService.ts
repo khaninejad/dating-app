@@ -5,7 +5,8 @@ import { IUser } from 'src/interfaces/IUser';
 // AWSConfig.logger = console;
 
 export default class UserService {
-  
+
+
 
 
 
@@ -30,23 +31,23 @@ export default class UserService {
     const params: DynamoDB.DocumentClient.ScanInput = {
       TableName: configuration().user_table,
     };
-  
+
     const expressionAttributeValues = {};
     let filterExpression = '';
-  
+
     if (filter) {
       if (filter.prefer) {
         filterExpression = 'gender = :gender';
         expressionAttributeValues[':gender'] = filter.prefer;
       }
-  
+
       if (filter.age_from && filter.age_to) {
         filterExpression += `${filterExpression ? ' AND ' : ''}birth_date BETWEEN :age_from AND :age_to`;
         expressionAttributeValues[':age_from'] = filter.age_from;
         expressionAttributeValues[':age_to'] = filter.age_to;
       }
     }
-  
+
     if (filterExpression) {
       params.FilterExpression = filterExpression;
       params.ExpressionAttributeValues = expressionAttributeValues;
@@ -67,7 +68,11 @@ export default class UserService {
       });
     }
 
-    return filteredResult;
+    const sortedProfiles = filteredResult?.sort((a, b) => {
+      return a.attractivenes - b.attractivenes;
+    });
+
+    return sortedProfiles;
   }
 
   private haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -80,7 +85,7 @@ export default class UserService {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   }
-  
+
   private toRadians(degrees: number): number {
     return degrees * (Math.PI / 180);
   }
@@ -109,6 +114,28 @@ export default class UserService {
     return result.Items.map((item) => item.profile_id);
   }
 
+  async getMatchCounts(user_id: string): Promise<any> {
+    const swipedProfileIds = await this.getUserSwipedProfiles(user_id);
+    // get the profiles that the user has swiped on
+    const swipedProfiles = await Promise.all(swipedProfileIds.map(async (profile_id) => {
+      const profile = await this.getProfileById(profile_id);
+      return profile;
+    }));
+    let positive_match = 0;
+    swipedProfiles.forEach((profile) => {
+      const profilePreference = profile.Item.preference;
+      if (profilePreference === 'YES') {
+        positive_match++;
+      }
+    });
+
+    const res = {
+      total_swipe: isNaN(swipedProfileIds.length)?0:swipedProfileIds.length,
+      positive_match: isNaN(positive_match)?0:positive_match,
+    };
+    return res;
+  }
+
   async loginUser(email: string, password: string) {
     const params: DynamoDB.DocumentClient.ScanInput = {
       TableName: configuration().user_table,
@@ -131,22 +158,24 @@ export default class UserService {
 
   async setToken(user_id: string) {
     const updated = await this.client
-            .update({
-                TableName: configuration().user_table,
-                Key: { id: user_id },
-                UpdateExpression:
-                    "set #authToken = :authToken",
-                ExpressionAttributeNames: {
-                    "#authToken": "authToken",
-                },
-                ExpressionAttributeValues: {
-                    ":authToken": this.generateRandomString(30),
-                },
-                ReturnValues: "ALL_NEW",
-            })
-            .promise();
+      .update({
+        TableName: configuration().user_table,
+        Key: { id: user_id },
+        UpdateExpression:
+          "set #authToken = :authToken, #recent_activity = :recent_activity",
+        ExpressionAttributeNames: {
+          "#authToken": "authToken",
+          "#recent_activity": "recent_activity",
+        },
+        ExpressionAttributeValues: {
+          ":authToken": this.generateRandomString(30),
+          ":recent_activity": new Date().toISOString(),
+        },
+        ReturnValues: "ALL_NEW",
+      })
+      .promise();
 
-        return updated.Attributes as IUser;
+    return updated.Attributes as IUser;
   }
   private generateRandomString(length: number): string {
     const possibleChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -173,5 +202,24 @@ export default class UserService {
     }
 
     throw new Error('invalid email or password');
-}
+  }
+  async setAttractiveness(user_id: number, user_attractivenes: number) {
+    const updated = await this.client
+    .update({
+      TableName: configuration().user_table,
+      Key: { id: user_id },
+      UpdateExpression:
+        "set #attractivenes = :attractivenes",
+      ExpressionAttributeNames: {
+        "#attractivenes": "attractivenes",
+      },
+      ExpressionAttributeValues: {
+        ":attractivenes": `${user_attractivenes}`,
+      },
+      ReturnValues: "ALL_NEW",
+    })
+    .promise();
+
+  return updated.Attributes as IUser;
+  }
 }
