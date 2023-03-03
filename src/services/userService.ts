@@ -1,8 +1,8 @@
 import configuration from '../config/config';
-import { config as AWSConfig, DynamoDB } from 'aws-sdk';
+import { DynamoDB } from 'aws-sdk';
 import { IFilter } from 'src/interfaces/IFilter';
 import { IUser } from 'src/interfaces/IUser';
-import { IUserDto } from '@functions/user/userDto';
+import { IUserDto } from '../functions/user/schema';
 // AWSConfig.logger = console;
 
 export default class UserService {
@@ -202,7 +202,7 @@ export default class UserService {
       return result.Items[0];
     }
 
-    throw new Error('invalid email or password');
+    throw new Error('Token is not valid');
   }
   async setAttractiveness(user_id: number, user_attractivenes: number) {
     const updated = await this.client
