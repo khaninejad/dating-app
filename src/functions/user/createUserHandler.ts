@@ -1,9 +1,9 @@
 
-import {userService} from "../../services/index";
+import { userService } from "../../services/index";
 import { v4 as uuidv4 } from 'uuid';
 import { faker } from '@faker-js/faker';
 import { APIGatewayEvent, APIGatewayProxyResult } from 'aws-lambda';
-import {Md5} from 'ts-md5';
+import { Md5 } from 'ts-md5';
 import { IUser } from 'src/interfaces/IUser';
 import * as z from 'zod';
 import { UserCreateRequest } from './schema';
@@ -22,9 +22,9 @@ const createUserHandler = async (event: APIGatewayEvent): Promise<APIGatewayProx
       };
     }
     let user = {} as IUser;
-    if(params.random){
+    if (params.random) {
       user = generateRandomProfile();
-    } else{
+    } else {
       user = {
         id: uuidv4(),
         email: params.email,
@@ -32,7 +32,10 @@ const createUserHandler = async (event: APIGatewayEvent): Promise<APIGatewayProx
         name: params.name,
         gender: params.gender,
         birth_date: new Date(params.birth_date).toISOString(),
-        location: { longitude: params.longitude, latitude: params.latitude},
+        location: { longitude: params.longitude, latitude: params.latitude },
+        authToken: '',
+        attractiveness: 0,
+        recent_activity: new Date().toISOString(),
       };
     }
 
@@ -58,7 +61,10 @@ function generateRandomProfile(): IUser {
     name: faker.name.fullName(),
     gender: faker.name.sexType(),
     birth_date: faker.date.birthdate().toISOString(),
-    location: { longitude: parseFloat(faker.address.longitude()), latitude: parseFloat(faker.address.latitude()) }
+    location: { longitude: parseFloat(faker.address.longitude()), latitude: parseFloat(faker.address.latitude()) },
+    authToken: '',
+    attractiveness: 0,
+    recent_activity: new Date().toISOString(),
   };
 }
 

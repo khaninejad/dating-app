@@ -1,21 +1,16 @@
 import configuration from '../config/config';
 import { DynamoDB } from 'aws-sdk';
 import { v4 as uuidv4 } from 'uuid';
-import { UserSwipeDto } from '@functions/swipe/schema';
-import { IUserService } from './userService';
+import { ISwipeService } from 'src/interfaces/ISwipeService';
+import { IUserSwipe } from 'src/interfaces/IUserSwipeDto';
+import { IUserService } from 'src/interfaces/IUserService';
 
-//todo: resolve any reponses 
-export interface ISwipeService {
-  createSwipe(swipe: UserSwipeDto): Promise<void>
-  getUserSwipedProfiles(user_id: string): Promise<any[]>
-  getMatchCounts(user_id: string): Promise<any>
-  calculateAttractiveness(user_id: string): Promise<void>
-}
+
 export default class SwipeService implements ISwipeService {
   constructor(private client: DynamoDB.DocumentClient, private userService: IUserService) {
   }
 
-  async createSwipe(swipe: UserSwipeDto) {
+  async createSwipe(swipe: IUserSwipe) {
     const swipeId = uuidv4();
 
     const swipeParams = {
@@ -64,7 +59,7 @@ export default class SwipeService implements ISwipeService {
     return result.Items.map((item) => item.profile_id);
   }
 
-  async getMatchCounts(user_id: string): Promise<any> {
+  async getMatchCounts(user_id: string): Promise<{total_swipe: number, positive_match: number }> {
     const swipedProfileIds = await this.getUserSwipedProfiles(user_id);
     const swipedProfiles = await Promise.all(swipedProfileIds.map(async (profile_id) => {
       const profile = await this.userService.getProfileById(profile_id);
@@ -80,7 +75,7 @@ export default class SwipeService implements ISwipeService {
   }
 
 
-  calculatePositiveMatch(swipedProfiles: any[]) {
+  calculatePositiveMatch(swipedProfiles: any[]):number {
     let positive_match = 0;
     swipedProfiles.forEach((profile) => {
       const profilePreference = profile.Item?.preference ?? 'NO';

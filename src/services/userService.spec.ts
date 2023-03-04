@@ -2,8 +2,9 @@
 import { DynamoDB } from 'aws-sdk';
 
 import SwipeService from './swipeService';
-import UserService, { IUserService } from './userService';
+import UserService from './userService';
 import configuration from '../../src/config/config';
+import { IUserService } from 'src/interfaces/IUserService';
 
 jest.mock('uuid', () => ({
     v4: jest.fn().mockReturnValue('1234')

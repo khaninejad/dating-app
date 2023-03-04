@@ -1,26 +1,16 @@
 import configuration from '../config/config';
 import { DynamoDB } from 'aws-sdk';
 import { IFilter } from 'src/interfaces/IFilter';
-import { IUser } from 'src/interfaces/IUser';
-import { IUserDto } from '../functions/user/schema';
-import { ISwipeService } from './swipeService';
-
-export interface IUserService {
-  getProfileById(profile_id: string): Promise<any>;
-  setAttractiveness(user_id: string, user_attractiveness: number): Promise<IUser>;
-  getProfiles(user_id: string, filter?: IFilter, location?: { latitude: number; longitude: number }): Promise<DynamoDB.DocumentClient.AttributeMap[]>
-  getUserSwipedProfilesInfos(user_id: string): Promise<DynamoDB.DocumentClient.ItemList>
-  loginUser(email: string, password: string): Promise<IUserDto>
-  setToken(user_id: string): Promise<IUser>
-  verifyUserToken(authToken: string): Promise<DynamoDB.DocumentClient.AttributeMap>
-}
+import { IUser } from '../interfaces/IUser';
+import { ISwipeService } from '../interfaces/ISwipeService';
+import { IUserService } from '../interfaces/IUserService';
 
 export default class UserService implements IUserService {
 
   constructor(private client: DynamoDB.DocumentClient, private readonly swipeService: ISwipeService) {
   }
 
-  async createUser(user: any) {
+  async createUser(user: IUser) {
     const params = {
       TableName: configuration().user_table,
       Item: user,
@@ -31,8 +21,6 @@ export default class UserService implements IUserService {
 
   async getProfiles(user_id: string, filter?: IFilter, location?: { latitude: number; longitude: number }) {
     const profileIdsToExclude = await this.swipeService.getUserSwipedProfiles(user_id);
-
-    console.log(`filter = ${JSON.stringify(filter)}`);
 
     const params: DynamoDB.DocumentClient.ScanInput = {
       TableName: configuration().user_table,
@@ -97,14 +85,14 @@ export default class UserService implements IUserService {
   }
 
 
-  async getProfileById(user_id: string) {
+  async getProfileById(user_id: string):Promise<IUser> {
     const res = await this.client.get({
       TableName: configuration().user_table,
       Key: {
         id: user_id
       }
     }).promise();
-    return res.Item;
+    return res.Item as IUser;
   }
 
   
@@ -123,7 +111,7 @@ export default class UserService implements IUserService {
 
   
 
-  async loginUser(email: string, password: string): Promise<IUserDto> {
+  async loginUser(email: string, password: string): Promise<IUser> {
     const params: DynamoDB.DocumentClient.ScanInput = {
       TableName: configuration().user_table,
       FilterExpression: 'email = :email AND password = :password AND attribute_not_exists(swipe_timestamp)',
@@ -136,7 +124,7 @@ export default class UserService implements IUserService {
 
     const result = await this.client.scan(params).promise();
     if (result.Count) {
-      return result.Items[0] as IUserDto;
+      return result.Items[0] as IUser;
     }
 
     throw new Error('invalid email or password');

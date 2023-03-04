@@ -1,17 +1,22 @@
 
 import { DynamoDB } from 'aws-sdk';
+import { IUser } from 'src/interfaces/IUser';
+import { IUserService } from 'src/interfaces/IUserService';
 
 import SwipeService from './swipeService';
-import UserService, { IUserService } from './userService';
+import UserService from './userService';
 
-const mockUser: any = {
+const mockUser: IUser = {
     id: 'user_id_1',
     name: 'Test User',
-    age: 25,
+    birth_date: '1990-10-10',
     gender: 'male',
-    preference: 'female',
     recent_activity: new Date().toISOString(),
     attractiveness: 0,
+    email: '',
+    password: '',
+    location: undefined,
+    authToken: ''
 };
 
 const mockSwipe: any = {
@@ -133,9 +138,13 @@ describe('SwipeService', () => {
         });
 
         it('should calculate attractiveness rate correctly', async () => {
+            // every second is 1000 millisecond
+            // every minute is 60 second
+            // every hour is 60 minute
+            // every day is 24 hour
             const mockUser = {
                 recent_activity: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-            };
+            } as IUser;
 
             jest.spyOn(userService, 'getProfileById').mockResolvedValueOnce(mockUser);
 

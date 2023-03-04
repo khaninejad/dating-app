@@ -28,7 +28,6 @@ const swipeHandler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResu
       const swipedProfile = await userService.getUserSwipedProfilesInfos(params.profile_id);
       const filtered = swipedProfile.filter((user) => user.profile_id === params.user_id && user.preference === 'YES');
 
-      console.log(filtered);
       if (filtered.length > 0) {
         isMatch = true;
       }

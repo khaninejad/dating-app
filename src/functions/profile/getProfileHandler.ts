@@ -17,11 +17,8 @@ const getProfileHandler = async (event: APIGatewayEvent): Promise<APIGatewayProx
       };
     }
     const { user_id, prefer, age_from, age_to } = event.queryStringParameters;
-    console.log(user_id);
-
 
     const user = await userService.getProfileById(user_id);
-    console.log(user);
     // 
     const filter: IFilter = {
       prefer,
