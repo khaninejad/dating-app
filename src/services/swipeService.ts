@@ -39,7 +39,7 @@ export default class SwipeService implements ISwipeService {
     await this.userService.setAttractiveness(user_id, user_attractiveness);
   }
 
-  private async calculateAttractivenessRate(user_id: string): Promise<number> {
+  async calculateAttractivenessRate(user_id: string): Promise<number> {
     const recent_activity = await (await this.userService.getProfileById(user_id)).recent_activity;
     const swipe_stats = await this.getMatchCounts(user_id);
     let recencyScore = (Date.now() - new Date(recent_activity).getTime()) / (1000 * 60 * 60 * 24 * 30); // Score based on how recently the user swiped.
@@ -70,13 +70,7 @@ export default class SwipeService implements ISwipeService {
       const profile = await this.userService.getProfileById(profile_id);
       return profile;
     }));
-    let positive_match = 0;
-    swipedProfiles.forEach((profile) => {
-      const profilePreference = profile.Item?.preference ?? 'NO';
-      if (profilePreference === 'YES') {
-        positive_match++;
-      }
-    });
+    let positive_match = this.calculatePositiveMatch(swipedProfiles);
 
     const res = {
       total_swipe: isNaN(swipedProfileIds.length) ? 0 : swipedProfileIds.length,
@@ -85,4 +79,15 @@ export default class SwipeService implements ISwipeService {
     return res;
   }
 
+
+  calculatePositiveMatch(swipedProfiles: any[]) {
+    let positive_match = 0;
+    swipedProfiles.forEach((profile) => {
+      const profilePreference = profile.Item?.preference ?? 'NO';
+      if (profilePreference === 'YES') {
+        positive_match++;
+      }
+    });
+    return positive_match;
+  }
 }
