@@ -11,7 +11,7 @@ const loginUserHandler = async (event: APIGatewayEvent): Promise<APIGatewayProxy
   try {
 
     const params = JSON.parse(event.body);
-    const validated = UserLoginRequest.safeParse(params); //command is of type CommandRequest
+    const validated = UserLoginRequest.safeParse(params);
     if (validated.success === false) {
       return {
         statusCode: 400,
@@ -26,7 +26,6 @@ const loginUserHandler = async (event: APIGatewayEvent): Promise<APIGatewayProxy
       body: JSON.stringify(token),
     };
   } catch (error) {
-    console.error(error);
     return {
       statusCode: 500,
       body: JSON.stringify({ message: `An error occurred: ${error.message}` }),

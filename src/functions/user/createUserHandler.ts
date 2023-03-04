@@ -1,39 +1,40 @@
-import { ValidatedEventAPIGatewayProxyEvent } from '@libs/api-gateway';
-import { middyfy } from '@libs/lambda';
+
 import {userService} from "../../services/index";
 import { v4 as uuidv4 } from 'uuid';
-import { createUserSchema } from './schema';
 import { faker } from '@faker-js/faker';
+import { APIGatewayEvent, APIGatewayProxyResult } from 'aws-lambda';
 import {Md5} from 'ts-md5';
 import { IUser } from 'src/interfaces/IUser';
+import * as z from 'zod';
+import { UserCreateRequest } from './schema';
 
+export type CommandRequest = z.infer<typeof UserCreateRequest>;
 
-
-const createUserHandler: ValidatedEventAPIGatewayProxyEvent<typeof createUserSchema> = async (event) => {
+const createUserHandler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
   try {
-    let user = {} as IUser;
-    if(event.body.random){
-      user = {
-        id: uuidv4(),
-        email: faker.internet.email(),
-        password: Md5.hashStr(faker.internet.password()),
-        name: faker.name.fullName(),
-        gender: faker.name.sexType(),
-        birth_date: faker.date.birthdate().toISOString(),
-        location: {longitude: parseFloat(faker.address.longitude()), latitude: parseFloat(faker.address.latitude()) }
+    const params = JSON.parse(event.body);
+    const validated = UserCreateRequest.safeParse(params);
+
+    if (validated.success === false) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ message: validated.error }),
       };
+    }
+    let user = {} as IUser;
+    if(params.random){
+      user = generateRandomProfile();
     } else{
       user = {
         id: uuidv4(),
-        email: event.body.email,
-        password: Md5.hashStr(event.body.password),
-        name: event.body.name,
-        gender: event.body.gender,
-        birth_date: new Date(event.body.birth_date).toISOString(),
-        location: {longitude: event.body.longitude, latitude: event.body.latitude}
+        email: params.email,
+        password: Md5.hashStr(params.password),
+        name: params.name,
+        gender: params.gender,
+        birth_date: new Date(params.birth_date).toISOString(),
+        location: { longitude: params.longitude, latitude: params.latitude},
       };
     }
-    
 
     await userService.createUser(user);
 
@@ -42,7 +43,6 @@ const createUserHandler: ValidatedEventAPIGatewayProxyEvent<typeof createUserSch
       body: JSON.stringify(user),
     };
   } catch (error) {
-    console.error(error);
     return {
       statusCode: 500,
       body: JSON.stringify({ message: `An error occurred: ${error.message}` }),
@@ -50,4 +50,17 @@ const createUserHandler: ValidatedEventAPIGatewayProxyEvent<typeof createUserSch
   }
 };
 
-export const main = middyfy(createUserHandler);
+function generateRandomProfile(): IUser {
+  return {
+    id: uuidv4(),
+    email: faker.internet.email(),
+    password: Md5.hashStr(faker.internet.password()),
+    name: faker.name.fullName(),
+    gender: faker.name.sexType(),
+    birth_date: faker.date.birthdate().toISOString(),
+    location: { longitude: parseFloat(faker.address.longitude()), latitude: parseFloat(faker.address.latitude()) }
+  };
+}
+
+export const main = createUserHandler;
+
