@@ -3,6 +3,7 @@ import type { AWS } from '@serverless/typescript';
 import { createUserHandler, loginUserHandler } from '@functions/user';
 import { getProfileHandler } from '@functions/profile';
 import { swipeHandler } from '@functions/swipe';
+import configuration from './src/config/config';
 
 const serverlessConfiguration: AWS = {
   service: 'dating-app-api',
@@ -55,7 +56,29 @@ const serverlessConfiguration: AWS = {
       UsersTable: {
         Type: 'AWS::DynamoDB::Table',
         Properties: {
-          TableName: 'DYNAMODB_TABLE',
+          TableName: configuration().user_table,
+          AttributeDefinitions: [
+            {
+              AttributeName: 'id',
+              AttributeType: 'S',
+            },
+          ],
+          KeySchema: [
+            {
+              AttributeName: 'id',
+              KeyType: 'HASH',
+            },
+          ],
+          ProvisionedThroughput: {
+            ReadCapacityUnits: 1,
+            WriteCapacityUnits: 1,
+          },
+        },
+      },
+      SwipeTable: {
+        Type: 'AWS::DynamoDB::Table',
+        Properties: {
+          TableName: configuration().swipe_table,
           AttributeDefinitions: [
             {
               AttributeName: 'id',

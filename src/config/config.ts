@@ -3,7 +3,7 @@ export interface ConfigurationOptions {
     swipe_table: string; 
 }
 export default (): ConfigurationOptions => ({
-    user_table: process.env.USER_TABLE ?? 'DYNAMODB_TABLE' ,
-    swipe_table: process.env.SWIPE_TABLE ?? 'SWIPE_TABLE7' ,
+    user_table: process.env.USER_TABLE ?? 'users-table' ,
+    swipe_table: process.env.SWIPE_TABLE ?? 'swipe-table' ,
     
 });
