@@ -6,6 +6,7 @@
   "scripts": {
     "seed": "npx ts-node src/db.ts",
     "start": "serverless offline start",
+    "deploy": "serverless deploy",
     "test": "jest"
   },
   "engines": {
