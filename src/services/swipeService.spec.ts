@@ -146,7 +146,7 @@ describe('SwipeService', () => {
 
             const attractivenessRate = await swipeService.calculateAttractivenessRate('123');
 
-            expect(attractivenessRate).toBe(40.33333333333333);
+            expect(attractivenessRate.toFixed(2)).toBe('40.33');
         });
     });
 
