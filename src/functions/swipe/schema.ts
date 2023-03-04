@@ -5,3 +5,9 @@ export const UserSwipeRequest = z.object({
   profile_id: z.string(),
   preference: z.enum(["YES", "NO"]),
 });
+
+export interface UserSwipeDto {
+  user_id: string;
+  profile_id: string;
+  preference: string;
+}

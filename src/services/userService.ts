@@ -3,10 +3,21 @@ import { DynamoDB } from 'aws-sdk';
 import { IFilter } from 'src/interfaces/IFilter';
 import { IUser } from 'src/interfaces/IUser';
 import { IUserDto } from '../functions/user/schema';
+import { ISwipeService } from './swipeService';
 
-export default class UserService {
+export interface IUserService {
+  getProfileById(profile_id: string): Promise<any>;
+  setAttractiveness(user_id: string, user_attractiveness: number): Promise<IUser>;
+  getProfiles(user_id: string, filter?: IFilter, location?: { latitude: number; longitude: number }): Promise<DynamoDB.DocumentClient.AttributeMap[]>
+  getUserSwipedProfilesInfos(user_id: string): Promise<DynamoDB.DocumentClient.ItemList>
+  loginUser(email: string, password: string): Promise<IUserDto>
+  setToken(user_id: string): Promise<IUser>
+  verifyUserToken(authToken: string): Promise<DynamoDB.DocumentClient.AttributeMap>
+}
 
-  constructor(private client: DynamoDB.DocumentClient) {
+export default class UserService implements IUserService {
+
+  constructor(private client: DynamoDB.DocumentClient, private readonly swipeService: ISwipeService) {
   }
 
   async createUser(user: any) {
@@ -19,7 +30,7 @@ export default class UserService {
   }
 
   async getProfiles(user_id: string, filter?: IFilter, location?: { latitude: number; longitude: number }) {
-    const profileIdsToExclude = await this.getUserSwipedProfiles(user_id);
+    const profileIdsToExclude = await this.swipeService.getUserSwipedProfiles(user_id);
 
     console.log(`filter = ${JSON.stringify(filter)}`);
 
@@ -96,19 +107,7 @@ export default class UserService {
     return res.Item;
   }
 
-  async getUserSwipedProfiles(user_id: string) {
-    const params: DynamoDB.DocumentClient.ScanInput = {
-      TableName: configuration().swipe_table,
-      FilterExpression: 'user_id = :user_id AND attribute_not_exists(swipe_timestamp)',
-      ExpressionAttributeValues: {
-        ':user_id': user_id,
-      },
-      ProjectionExpression: 'profile_id',
-    };
-
-    const result = await this.client.scan(params).promise();
-    return result.Items.map((item) => item.profile_id);
-  }
+  
   async getUserSwipedProfilesInfos(user_id: string) {
     const params: DynamoDB.DocumentClient.ScanInput = {
       TableName: configuration().swipe_table,
@@ -122,27 +121,7 @@ export default class UserService {
     return result.Items;
   }
 
-  async getMatchCounts(user_id: string): Promise<any> {
-    const swipedProfileIds = await this.getUserSwipedProfiles(user_id);
-    // get the profiles that the user has swiped on
-    const swipedProfiles = await Promise.all(swipedProfileIds.map(async (profile_id) => {
-      const profile = await this.getProfileById(profile_id);
-      return profile;
-    }));
-    let positive_match = 0;
-    swipedProfiles.forEach((profile) => {
-      const profilePreference = profile.Item?.preference ?? 'NO';
-      if (profilePreference === 'YES') {
-        positive_match++;
-      }
-    });
-
-    const res = {
-      total_swipe: isNaN(swipedProfileIds.length) ? 0 : swipedProfileIds.length,
-      positive_match: isNaN(positive_match) ? 0 : positive_match,
-    };
-    return res;
-  }
+  
 
   async loginUser(email: string, password: string): Promise<IUserDto> {
     const params: DynamoDB.DocumentClient.ScanInput = {
@@ -211,39 +190,24 @@ export default class UserService {
 
     throw new Error('Token is not valid');
   }
-  async setAttractiveness(user_id: string, user_attractivenes: number) {
+
+  async setAttractiveness(user_id: string, user_attractiveness: number): Promise<IUser> {
     const updated = await this.client
       .update({
         TableName: configuration().user_table,
         Key: { id: user_id },
         UpdateExpression:
-          "set #attractivenes = :attractivenes",
+          "set #attractiveness = :attractiveness",
         ExpressionAttributeNames: {
-          "#attractivenes": "attractivenes",
+          "#attractiveness": "attractiveness",
         },
         ExpressionAttributeValues: {
-          ":attractivenes": `${user_attractivenes}`,
+          ":attractiveness": `${user_attractiveness}`,
         },
         ReturnValues: "ALL_NEW",
       })
       .promise();
 
     return updated.Attributes as IUser;
-  }
-
-  async calculateAttractiveness(user_id: string): Promise<void> {
-    const user_attractiveness = await this.calculateAttractivenessRate(user_id);
-    this.setAttractiveness(user_id, user_attractiveness);
-  }
-
-  async calculateAttractivenessRate(user_id: string): Promise<number> {
-    const recent_activity = await (await this.getProfileById(user_id)).recent_activity;
-    const swipe_stats = await this.getMatchCounts(user_id);
-    let recencyScore = (Date.now() - new Date(recent_activity).getTime()) / (1000 * 60 * 60 * 24 * 30); // Score based on how recently the user swiped.
-    recencyScore = isNaN(recencyScore) ? 0 : recencyScore
-    const positiveSwipeScore = swipe_stats.positive_match * 2; // Each positive swipe is worth 2 points.
-    const totalSwipeScore = swipe_stats.total_swipe; // Each swipe is worth 1 point.
-    const attractivenessScore = recencyScore + positiveSwipeScore + totalSwipeScore;
-    return attractivenessScore;
   }
 }

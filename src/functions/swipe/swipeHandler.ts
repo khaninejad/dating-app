@@ -35,8 +35,8 @@ const swipeHandler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResu
     }
 
     await Promise.all([
-      userService.calculateAttractiveness(params.user_id),
-      userService.calculateAttractiveness(params.profile_id),
+      swipeService.calculateAttractiveness(params.user_id),
+      swipeService.calculateAttractiveness(params.profile_id),
     ]);
 
     const response = {

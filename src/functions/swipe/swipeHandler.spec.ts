@@ -14,6 +14,7 @@ jest.mock('../../services/index', () => ({
     },
     swipeService: {
         createSwipe: jest.fn(),
+        calculateAttractiveness: jest.fn(),
     },
 }));
 
