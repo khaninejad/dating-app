@@ -1,22 +1,22 @@
-import { AuthHandler } from './AuthHandler';
-import { userService } from '../../services/index';
+import { Auth } from './auth';
+import { userService } from '../services/index';
 
-jest.mock('../../services/index');
+jest.mock('../services/index');
 
-describe('AuthHandler', () => {
+describe('Auth', () => {
     beforeEach(() => {
         jest.clearAllMocks();
     });
 
     describe('verifyToken', () => {
         it('should throw an error if authorization header is missing', async () => {
-            await expect(AuthHandler.verifyToken('')).rejects.toThrow('Authorization header is missing');
+            await expect(Auth.verifyToken('')).rejects.toThrow('Authorization header is missing');
         });
 
         it('should call userService.verifyUserToken with the provided token', async () => {
             const mockToken = 'mockToken';
             const mockVerifyUserToken = jest.spyOn(userService, 'verifyUserToken');
-            await AuthHandler.verifyToken(mockToken);
+            await Auth.verifyToken(mockToken);
             expect(mockVerifyUserToken).toHaveBeenCalledWith(mockToken);
         });
     });

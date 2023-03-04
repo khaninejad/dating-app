@@ -3,14 +3,8 @@ import { DynamoDB } from 'aws-sdk';
 import { IFilter } from 'src/interfaces/IFilter';
 import { IUser } from 'src/interfaces/IUser';
 import { IUserDto } from '../functions/user/schema';
-// AWSConfig.logger = console;
 
 export default class UserService {
-
-
-
-
-
 
   constructor(private client: DynamoDB.DocumentClient) {
   }
@@ -93,12 +87,13 @@ export default class UserService {
 
 
   async getProfileById(user_id: string) {
-    return await this.client.get({
+    const res = await this.client.get({
       TableName: configuration().user_table,
       Key: {
         id: user_id
       }
     }).promise();
+    return res.Item;
   }
 
   async getUserSwipedProfiles(user_id: string) {
@@ -114,6 +109,18 @@ export default class UserService {
     const result = await this.client.scan(params).promise();
     return result.Items.map((item) => item.profile_id);
   }
+  async getUserSwipedProfilesInfos(user_id: string) {
+    const params: DynamoDB.DocumentClient.ScanInput = {
+      TableName: configuration().swipe_table,
+      FilterExpression: 'user_id = :user_id AND attribute_not_exists(swipe_timestamp)',
+      ExpressionAttributeValues: {
+        ':user_id': user_id,
+      }
+    };
+
+    const result = await this.client.scan(params).promise();
+    return result.Items;
+  }
 
   async getMatchCounts(user_id: string): Promise<any> {
     const swipedProfileIds = await this.getUserSwipedProfiles(user_id);
@@ -124,15 +131,15 @@ export default class UserService {
     }));
     let positive_match = 0;
     swipedProfiles.forEach((profile) => {
-      const profilePreference = profile.Item.preference;
+      const profilePreference = profile.Item?.preference ?? 'NO';
       if (profilePreference === 'YES') {
         positive_match++;
       }
     });
 
     const res = {
-      total_swipe: isNaN(swipedProfileIds.length)?0:swipedProfileIds.length,
-      positive_match: isNaN(positive_match)?0:positive_match,
+      total_swipe: isNaN(swipedProfileIds.length) ? 0 : swipedProfileIds.length,
+      positive_match: isNaN(positive_match) ? 0 : positive_match,
     };
     return res;
   }
@@ -204,23 +211,39 @@ export default class UserService {
 
     throw new Error('Token is not valid');
   }
-  async setAttractiveness(user_id: number, user_attractivenes: number) {
+  async setAttractiveness(user_id: string, user_attractivenes: number) {
     const updated = await this.client
-    .update({
-      TableName: configuration().user_table,
-      Key: { id: user_id },
-      UpdateExpression:
-        "set #attractivenes = :attractivenes",
-      ExpressionAttributeNames: {
-        "#attractivenes": "attractivenes",
-      },
-      ExpressionAttributeValues: {
-        ":attractivenes": `${user_attractivenes}`,
-      },
-      ReturnValues: "ALL_NEW",
-    })
-    .promise();
+      .update({
+        TableName: configuration().user_table,
+        Key: { id: user_id },
+        UpdateExpression:
+          "set #attractivenes = :attractivenes",
+        ExpressionAttributeNames: {
+          "#attractivenes": "attractivenes",
+        },
+        ExpressionAttributeValues: {
+          ":attractivenes": `${user_attractivenes}`,
+        },
+        ReturnValues: "ALL_NEW",
+      })
+      .promise();
 
-  return updated.Attributes as IUser;
+    return updated.Attributes as IUser;
+  }
+
+  async calculateAttractiveness(user_id: string): Promise<void> {
+    const user_attractiveness = await this.calculateAttractivenessRate(user_id);
+    this.setAttractiveness(user_id, user_attractiveness);
+  }
+
+  async calculateAttractivenessRate(user_id: string): Promise<number> {
+    const recent_activity = await (await this.getProfileById(user_id)).recent_activity;
+    const swipe_stats = await this.getMatchCounts(user_id);
+    let recencyScore = (Date.now() - new Date(recent_activity).getTime()) / (1000 * 60 * 60 * 24 * 30); // Score based on how recently the user swiped.
+    recencyScore = isNaN(recencyScore) ? 0 : recencyScore
+    const positiveSwipeScore = swipe_stats.positive_match * 2; // Each positive swipe is worth 2 points.
+    const totalSwipeScore = swipe_stats.total_swipe; // Each swipe is worth 1 point.
+    const attractivenessScore = recencyScore + positiveSwipeScore + totalSwipeScore;
+    return attractivenessScore;
   }
 }

@@ -1,6 +1,6 @@
-import { userService } from '../../services/index';
+import { userService } from '../services/index';
 
-export class AuthHandler {
+export class Auth {
   static async verifyToken(token: string): Promise<void> {
     if (!token) throw new Error('Authorization header is missing');
 

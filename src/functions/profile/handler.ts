@@ -1,13 +1,12 @@
-import { AuthHandler } from '@functions/user/AuthHandler';
+import { Auth } from '../../libs/auth';
 import { ValidatedEventAPIGatewayProxyEvent } from '@libs/api-gateway';
-import { middyfy } from '@libs/lambda';
 import { IFilter } from 'src/interfaces/IFilter';
 import {userService} from "../../services/index";
 import schema from './schema';
 
 const getProfileHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event) => {
   try {
-    await AuthHandler.verifyToken(event.headers['token']);
+    await Auth.verifyToken(event.headers['token']);
 
     const user = await userService.getProfileById(event.queryStringParameters.user_id);
     // 
@@ -31,7 +30,6 @@ const getProfileHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = asy
     };
 
   } catch (error) {
-    console.error(error);
     return {
       statusCode: 500,
       body: JSON.stringify({ message: `An error occurred: ${error.message}` }),
@@ -41,4 +39,4 @@ const getProfileHandler: ValidatedEventAPIGatewayProxyEvent<typeof schema> = asy
 
 
 
-export const main = middyfy(getProfileHandler);
+export const main = getProfileHandler;
