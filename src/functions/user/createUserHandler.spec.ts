@@ -50,7 +50,6 @@ describe('createUserHandler', () => {
   });
 
   it('should create a user with random parameters', async () => {
-    // todo: should not validate if random = true
 
     const event = {
         body: JSON.stringify({...expectedResult, random: true})

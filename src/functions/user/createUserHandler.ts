@@ -31,7 +31,7 @@ const createUserHandler = async (event: APIGatewayEvent): Promise<APIGatewayProx
         name: params.name,
         gender: params.gender,
         birth_date: new Date(params.birth_date).toISOString(),
-        location: { longitude: params.longitude, latitude: params.latitude },
+        location: { longitude: params.location.longitude, latitude: params.location.latitude },
         authToken: '',
         attractiveness: 0,
         recent_activity: new Date().toISOString(),
