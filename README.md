@@ -1,7 +1,7 @@
 
 # AWS Serverless Typescript API for Dating App
 
-This project is a Serverless AWS Node.js and Typescript template for building a mini API that could power a simple dating app. The functionality is split into three parts, and an optional bonus. Each part involves writing Node.js and building a small NoSQL database.
+This project is a serverless AWS Node.js and Typescript template for building a mini API that could power a simple dating app. Each part involves writing handlers and using the DynamoDB database.
 
 ## Getting Started
 
