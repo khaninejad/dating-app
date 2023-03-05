@@ -54,19 +54,25 @@ export default class UserService implements IUserService {
       return !profileIdsToExclude.includes(item.id);
     });
 
-    if (location) {
-      filteredResult.sort((a, b) => {
-        const distanceA = this.haversine(location.latitude, location.longitude, a.location.latitude, a.location.longitude);
-        const distanceB = this.haversine(location.latitude, location.longitude, b.location.latitude, b.location.longitude);
-        return distanceA - distanceB;
-      });
+    if (filter.sort_by) {
+
+      if (filter.sort_by === 'distance' && location) {
+        filteredResult.sort((a, b) => {
+          const distanceA = this.haversine(location.latitude, location.longitude, a.location.latitude, a.location.longitude);
+          const distanceB = this.haversine(location.latitude, location.longitude, b.location.latitude, b.location.longitude);
+          return distanceA - distanceB;
+        });
+      }
+
+      if (filter.sort_by === 'attractiveness') {
+        return filteredResult?.sort((a, b) => {
+          return a.attractivenes - b.attractivenes;
+        });
+      }
+
     }
 
-    const sortedProfiles = filteredResult?.sort((a, b) => {
-      return a.attractivenes - b.attractivenes;
-    });
-
-    return sortedProfiles;
+    return filteredResult;
   }
 
   private haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -85,7 +91,7 @@ export default class UserService implements IUserService {
   }
 
 
-  async getProfileById(user_id: string):Promise<IUser> {
+  async getProfileById(user_id: string): Promise<IUser> {
     const res = await this.client.get({
       TableName: configuration().user_table,
       Key: {
@@ -95,7 +101,7 @@ export default class UserService implements IUserService {
     return res.Item as IUser;
   }
 
-  
+
   async getUserSwipedProfilesInfos(user_id: string) {
     const params: DynamoDB.DocumentClient.ScanInput = {
       TableName: configuration().swipe_table,
@@ -109,7 +115,7 @@ export default class UserService implements IUserService {
     return result.Items;
   }
 
-  
+
 
   async loginUser(email: string, password: string): Promise<IUser> {
     const params: DynamoDB.DocumentClient.ScanInput = {

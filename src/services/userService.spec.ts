@@ -63,7 +63,7 @@ describe('UserService', () => {
         it('should return filtered and sorted profiles', async () => {
             const scanSpy = jest.spyOn(mockDocumentClient, 'scan');
 
-            const profiles = await userService.getProfiles('123', { prefer: 'female', age_from: '1990-10-10', age_to: '1998-10-10' }, { latitude: 37.7749, longitude: -122.4194 });
+            const profiles = await userService.getProfiles('123', { prefer: 'female', age_from: '1990-10-10', age_to: '1998-10-10', sort_by: 'distance' }, { latitude: 37.7749, longitude: -122.4194 });
 
             expect(scanSpy).toHaveBeenCalled();
             expect(profiles.length).toBe(4);

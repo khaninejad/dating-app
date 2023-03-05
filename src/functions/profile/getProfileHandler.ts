@@ -16,7 +16,7 @@ const getProfileHandler = async (event: APIGatewayEvent): Promise<APIGatewayProx
         body: JSON.stringify({ message: validated.error }),
       };
     }
-    const { user_id, prefer, age_from, age_to } = event.queryStringParameters;
+    const { user_id, prefer, age_from, age_to, sort_by } = event.queryStringParameters;
 
     const user = await userService.getProfileById(user_id);
     // 
@@ -24,6 +24,7 @@ const getProfileHandler = async (event: APIGatewayEvent): Promise<APIGatewayProx
       prefer,
       age_from,
       age_to,
+      sort_by,
     };
     const result = await userService.getProfiles(user_id, filter, { latitude: user.location.latitude, longitude: user.location.longitude });
 

@@ -21,7 +21,8 @@ describe('getProfileHandler', () => {
       user_id: mockUserId,
       prefer: 'male',
       age_from: '1990-10-10',
-      age_to: '1999-10-10'
+      age_to: '1999-10-10',
+      sort_by: 'distance'
     },
     requestContext: {
       authorizer: {
@@ -92,7 +93,8 @@ describe('getProfileHandler', () => {
       expect.objectContaining<IFilter>({
         prefer: 'male',
         age_from: '1990-10-10',
-        age_to: '1999-10-10'
+        age_to: '1999-10-10',
+        sort_by: 'distance',
       }),
       expect.objectContaining({
         latitude: 1,
