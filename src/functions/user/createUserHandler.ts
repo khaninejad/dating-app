@@ -13,18 +13,17 @@ export type CommandRequest = z.infer<typeof UserCreateRequest>;
 const createUserHandler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
   try {
     const params = JSON.parse(event.body);
-    const validated = UserCreateRequest.safeParse(params);
-
-    if (validated.success === false) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ message: validated.error }),
-      };
-    }
     let user = {} as IUser;
-    if (params.random) {
-      user = generateRandomProfile();
-    } else {
+    if (!params.random) {
+      const validated = UserCreateRequest.safeParse(params);
+
+      if (validated.success === false) {
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ message: validated.error }),
+        };
+      }
+
       user = {
         id: uuidv4(),
         email: params.email,
@@ -37,8 +36,9 @@ const createUserHandler = async (event: APIGatewayEvent): Promise<APIGatewayProx
         attractiveness: 0,
         recent_activity: new Date().toISOString(),
       };
+    } else {
+      user = generateRandomProfile();
     }
-
     await userService.createUser(user);
 
     return {
