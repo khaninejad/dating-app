@@ -2,6 +2,7 @@
 import { DynamoDB } from 'aws-sdk';
 import { IUser } from 'src/interfaces/IUser';
 import { IUserService } from 'src/interfaces/IUserService';
+import configuration from '../config/config';
 
 import SwipeService from './swipeService';
 import UserService from './userService';
@@ -69,7 +70,7 @@ describe('SwipeService', () => {
         await swipeService.createSwipe(mockSwipe);
 
         expect(putSpy).toHaveBeenCalledWith({
-            TableName: 'SWIPE_TABLE7',
+            TableName: configuration().swipe_table,
             Item: expect.objectContaining({
                 id: '1234',
                 user_id: 'user_id_1',
@@ -86,7 +87,7 @@ describe('SwipeService', () => {
             const profiles = await swipeService.getUserSwipedProfiles('user_id_1');
 
             expect(scanSpy).toHaveBeenCalledWith({
-                TableName: 'SWIPE_TABLE7',
+                TableName: configuration().swipe_table,
                 FilterExpression: 'user_id = :user_id AND attribute_not_exists(swipe_timestamp)',
                 ExpressionAttributeValues: {
                     ':user_id': 'user_id_1',
