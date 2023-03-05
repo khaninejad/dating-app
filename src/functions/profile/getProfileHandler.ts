@@ -8,7 +8,6 @@ const getProfileHandler = async (event: APIGatewayEvent): Promise<APIGatewayProx
   try {
     await Auth.verifyToken(event.headers['token']);
 
-
     const validated = GetProfileRequest.safeParse(event.queryStringParameters);
     if (validated.success === false) {
       return {
@@ -19,6 +18,9 @@ const getProfileHandler = async (event: APIGatewayEvent): Promise<APIGatewayProx
     const { user_id, prefer, age_from, age_to, sort_by } = event.queryStringParameters;
 
     const user = await userService.getProfileById(user_id);
+    if(!user){
+      throw new Error('user not found');
+    }
     // 
     const filter: IFilter = {
       prefer,

@@ -71,6 +71,17 @@ describe('getProfileHandler', () => {
     expect(userService.getProfileById).toHaveBeenCalledWith(mockUserId);
   });
 
+  it('should throws user not found', async () => {
+    Auth.verifyToken = jest.fn().mockReturnValueOnce(undefined);
+    const { userService } = require('../../services/index');
+    userService.getProfileById.mockResolvedValueOnce();
+
+    const result = await handler(mockEvent);
+
+    expect(result.statusCode).toBe(500);
+    expect(result.body).toMatch(/user not found/);  
+  });
+
   it('should return list of profiles if service method returns', async () => {
     const mockProfile = {
       id: 'mock-id',
